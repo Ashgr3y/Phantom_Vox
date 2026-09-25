@@ -1,0 +1,2634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHANTOM VOX — Voice Cloning Detection & Prevention System</title>
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & CSS VARIABLES
+       ========================================================================== */
+    :root {
+      --bg-color: #080b10;
+      --card-bg: #11161d;
+      --card-secondary: #171d26;
+      --border-color: #252c36;
+      --border-hover: #3b4654;
+      
+      --text-main: #f1f5f9;
+      --text-muted: #8b95a5;
+      --text-dark: #64748b;
+      
+      --accent-green: #10b981;
+      --accent-green-bg: rgba(16, 185, 129, 0.12);
+      --accent-green-border: rgba(16, 185, 129, 0.3);
+      
+      --accent-amber: #f59e0b;
+      --accent-amber-bg: rgba(245, 158, 11, 0.12);
+      --accent-amber-border: rgba(245, 158, 11, 0.3);
+      
+      --accent-red: #ef4444;
+      --accent-red-bg: rgba(239, 68, 68, 0.12);
+      --accent-red-border: rgba(239, 68, 68, 0.3);
+      
+      --accent-blue: #3b82f6;
+      --accent-blue-bg: rgba(59, 130, 246, 0.12);
+      
+      --font-stack: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Reset & Base styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Layout structure */
+    .main-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem 1.5rem;
+      flex: 1;
+    }
+
+    /* Utility classes */
+    .hidden { display: none !important; }
+    
+    /* Typography helpers */
+    .bonafide-text { color: var(--accent-green) !important; }
+    .spoof-text { color: var(--accent-red) !important; }
+    .amber-text { color: var(--accent-amber) !important; }
+    .bonafide-text-bold { color: var(--accent-green); font-weight: 600; }
+    .spoof-text-bold { color: var(--accent-red); font-weight: 600; }
+
+    /* ==========================================================================
+       TOP NAVBAR
+       ========================================================================== */
+    .navbar {
+      background-color: rgba(17, 22, 29, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(16, 185, 129, 0.2));
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #60a5fa;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--text-main);
+      text-transform: uppercase;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .health-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.online {
+      background-color: var(--accent-green);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    }
+
+    .status-dot.offline {
+      background-color: var(--accent-red);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
+
+    .status-text {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .status-device {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding-left: 0.35rem;
+      border-left: 1px solid var(--border-color);
+    }
+
+    /* ==========================================================================
+       HERO SECTION
+       ========================================================================== */
+    .hero-section {
+      text-align: center;
+      margin: 1.75rem 0 2rem 0;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background-color: var(--accent-blue-bg);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    .hero-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* ==========================================================================
+       CARDS & CONTAINER STYLES
+       ========================================================================== */
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .card-header {
+      margin-bottom: 1.25rem;
+    }
+
+    .card-header h2, .card-header h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .card-subtitle {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 0.2rem;
+    }
+
+    .card-header-small {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ==========================================================================
+       ERROR HANDLING BOX
+       ========================================================================== */
+    .error-box {
+      background-color: var(--accent-red-bg);
+      border: 1px solid var(--accent-red-border);
+      color: #fca5a5;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .error-content {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .error-icon {
+      flex-shrink: 0;
+      color: var(--accent-red);
+    }
+
+    .error-dismiss {
+      background: none;
+      border: none;
+      color: #fca5a5;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 0 0.4rem;
+      line-height: 1;
+      opacity: 0.8;
+      transition: var(--transition);
+    }
+
+    .error-dismiss:hover { opacity: 1; color: #ffffff; }
+
+    /* ==========================================================================
+       UPLOAD CARD & DROPZONE
+       ========================================================================== */
+    .dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      background-color: var(--card-secondary);
+      padding: 3rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: #60a5fa;
+      background-color: rgba(30, 41, 59, 0.6);
+    }
+
+    .hidden-file-input {
+      display: none;
+    }
+
+    .dropzone-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 1rem auto;
+      background-color: rgba(37, 44, 54, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .dropzone:hover .dropzone-icon {
+      color: #60a5fa;
+      transform: translateY(-2px);
+    }
+
+    .dropzone-text {
+      margin-bottom: 1rem;
+    }
+
+    .drag-prompt {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .browse-prompt {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: #60a5fa;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    .dropzone-footer {
+      font-size: 0.775rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+
+    .dot-divider { color: var(--border-color); }
+
+    /* File Preview Panel */
+    .file-preview-panel {
+      margin-top: 1.25rem;
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+
+    .file-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .file-details {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .file-icon {
+      color: #60a5fa;
+      flex-shrink: 0;
+    }
+
+    .file-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      word-break: break-all;
+    }
+
+    .file-size {
+      font-size: 0.775rem;
+      color: var(--text-muted);
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.4rem;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--accent-red);
+    }
+
+    .audio-player-wrapper {
+      margin-bottom: 1.25rem;
+    }
+
+    audio {
+      width: 100%;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      outline: none;
+    }
+
+    .action-bar {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 0.75rem 1.75rem;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: 0.03em;
+    }
+
+    .btn-primary {
+      background-color: #2563eb;
+      color: #ffffff;
+      border-color: #3b82f6;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: #1d4ed8;
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-primary:disabled {
+      background-color: var(--border-color);
+      border-color: var(--border-color);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .btn-secondary {
+      background-color: var(--card-secondary);
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--border-color);
+      border-color: var(--border-hover);
+    }
+
+    .btn-icon-svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       VERDICT & RESULT CARD
+       ========================================================================== */
+    .verdict-card {
+      border-width: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .verdict-main {
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .verdict-header-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .verdict-title {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+    }
+
+    /* Action Badges */
+    .action-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .action-allowed {
+      background-color: var(--accent-green-bg);
+      border: 1px solid var(--accent-green-border);
+      color: var(--accent-green);
+    }
+
+    .action-flagged {
+      background-color: var(--accent-amber-bg);
+      border: 1px solid var(--accent-amber-border);
+      color: var(--accent-amber);
+    }
+
+    .action-blocked {
+      background-color: var(--accent-red-bg);
+      border: 1px solid var(--accent-red-border);
+      color: var(--accent-red);
+    }
+
+    .verdict-message {
+      font-size: 0.975rem;
+      color: var(--text-main);
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.85rem 1.15rem;
+      border-radius: var(--radius-md);
+      border-left: 4px solid #60a5fa;
+    }
+
+    /* Scores Meter Grid */
+    .scores-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 640px) {
+      .scores-grid { grid-template-columns: 1fr; }
+    }
+
+    .score-card {
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-md);
+    }
+
+    .score-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .score-label {
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .score-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .meter-bar {
+      height: 8px;
+      background-color: var(--bg-color);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .spoof-fill { background-color: var(--accent-red); }
+    .bonafide-fill { background-color: var(--accent-green); }
+
+    /* ==========================================================================
+       PREVENTION DECISION FLOW
+       ========================================================================== */
+    .flow-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+      padding: 0.5rem 0;
+    }
+
+    .flow-step {
+      flex: 1;
+      min-width: 140px;
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-color: var(--border-color);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .flow-step.completed .step-num {
+      background-color: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+
+    .step-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .step-title {
+      font-size: 0.775rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .flow-arrow {
+      color: var(--text-dark);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .decision-explanation {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+    }
+
+    /* ==========================================================================
+       AUDIO TIMELINE (CORE FEATURE)
+       ========================================================================== */
+    .timeline-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .timeline-legend {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.775rem;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .legend-low { background-color: var(--accent-green); }
+    .legend-med { background-color: var(--accent-amber); }
+    .legend-high { background-color: var(--accent-red); }
+
+    .timeline-wrapper {
+      position: relative;
+      margin-bottom: 1.5rem;
+      user-select: none;
+    }
+
+    .timeline-track {
+      height: 48px;
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .timeline-segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      cursor: pointer;
+      border-right: 1px solid rgba(0, 0, 0, 0.4);
+      opacity: 0.9;
+    }
+
+    .timeline-segment:hover {
+      opacity: 1;
+      transform: scaleY(1.06);
+      z-index: 10;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+    }
+
+    .timeline-segment.spoof-window {
+      border: 2px solid #ef4444 !important;
+      box-shadow: inset 0 0 8px rgba(239, 68, 68, 0.6);
+      z-index: 5;
+    }
+
+    .timeline-ticks {
+      position: relative;
+      height: 24px;
+      margin-top: 0.4rem;
+    }
+
+    .tick-item {
+      position: absolute;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .tick-mark {
+      width: 1px;
+      height: 6px;
+      background-color: var(--text-dark);
+    }
+
+    .tick-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Tooltip */
+    .timeline-tooltip {
+      position: fixed;
+      background-color: #1e293b;
+      border: 1px solid var(--border-hover);
+      color: var(--text-main);
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      pointer-events: none;
+      z-index: 1000;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      line-height: 1.4;
+    }
+
+    .tooltip-title {
+      font-weight: 700;
+      color: #94a3b8;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.25rem;
+      margin-bottom: 0.35rem;
+    }
+
+    /* Mobile active segment panel */
+    .active-segment-panel {
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .segment-panel-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .segment-panel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .segment-stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .segment-stat-lbl {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .segment-stat-val {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    /* ==========================================================================
+       WINDOW DETAILS TABLE
+       ========================================================================== */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .window-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    .window-table th {
+      background-color: var(--card-secondary);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.775rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .window-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .window-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .window-table tbody tr:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .table-badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-bonafide {
+      background-color: var(--accent-green-bg);
+      color: var(--accent-green);
+      border: 1px solid var(--accent-green-border);
+    }
+
+    .badge-spoof {
+      background-color: var(--accent-red-bg);
+      color: var(--accent-red);
+      border: 1px solid var(--accent-red-border);
+    }
+
+    /* ==========================================================================
+       BOTTOM METRICS & INFO GRID
+       ========================================================================== */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    .stat-items {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .stat-item {
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 0.15rem;
+    }
+
+    .info-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      background-color: var(--card-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+    }
+
+    .info-key {
+      color: var(--text-muted);
+    }
+
+    .info-val {
+      font-weight: 600;
+      color: var(--text-main);
+      word-break: break-all;
+    }
+
+    /* Reset button area */
+    .reset-container {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    /* ==========================================================================
+       LIVE MONITORING CARD
+       ========================================================================== */
+    .btn-live {
+      background-color: var(--accent-green-bg);
+      color: var(--accent-green);
+      border-color: var(--accent-green-border);
+    }
+
+    .btn-live:hover:not(:disabled) {
+      background-color: rgba(16, 185, 129, 0.22);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-live.is-active {
+      background-color: var(--accent-red-bg);
+      color: var(--accent-red);
+      border-color: var(--accent-red-border);
+    }
+
+    .btn-live.is-active:hover:not(:disabled) {
+      background-color: rgba(239, 68, 68, 0.22);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .live-status-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--text-dark);
+      display: inline-block;
+    }
+
+    .live-dot.pulsing {
+      background-color: var(--accent-green);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+      animation: livePulse 1.4s infinite;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .live-note {
+      font-size: 0.8rem;
+      color: var(--text-dark);
+      margin-top: 0.75rem;
+      line-height: 1.5;
+    }
+  </style>
+
+
+<style>
+/* ===================== PHANTOM VOX — 10/10 PRODUCT UI ===================== */
+:root{
+  --bg-color:#f3f6fa;
+  --card-bg:#ffffff;
+  --card-secondary:#f8fafc;
+  --border-color:#e4e9f0;
+  --border-hover:#cbd5e1;
+  --text-main:#172033;
+  --text-muted:#667085;
+  --text-dark:#98a2b3;
+  --accent-green:#087443;
+  --accent-green-bg:#ecfdf3;
+  --accent-green-border:#a6e6c5;
+  --accent-amber:#9a6700;
+  --accent-amber-bg:#fffaeb;
+  --accent-amber-border:#f3d38a;
+  --accent-red:#b42318;
+  --accent-red-bg:#fff1f0;
+  --accent-red-border:#f4b7b1;
+  --accent-blue:#175cd3;
+  --accent-blue-bg:#eff8ff;
+  --font-stack:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --radius-sm:6px;
+  --radius-md:9px;
+  --radius-lg:12px;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.04);
+  --shadow-md:0 5px 16px rgba(16,24,40,.06);
+  --transition:all .18s ease;
+}
+
+html{background:#f3f6fa;scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(circle at 85% -10%,rgba(23,92,211,.045),transparent 28%),
+    #f3f6fa;
+  color:var(--text-main);
+  font-family:var(--font-stack);
+}
+::selection{background:#dbeafe;color:#172033}
+
+/* Header */
+.navbar{
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid #e5e7eb;
+  box-shadow:0 1px 4px rgba(16,24,40,.035);
+}
+.nav-container{max-width:1320px;padding:.78rem 1.5rem}
+.brand{gap:.72rem}
+.brand-icon{
+  width:38px;height:38px;border-radius:9px;
+  background:#eef4ff;border:1px solid #d6e3f8;color:#175cd3;
+}
+.brand-title{font-size:1.02rem;letter-spacing:.065em;color:#101828}
+.brand-subtitle{font-size:.72rem;color:#667085}
+.health-status{
+  background:#fff;border:1px solid #e4e7ec;
+  box-shadow:var(--shadow-sm);color:#344054;
+  padding:.4rem .72rem;border-radius:7px;
+}
+.status-dot.online,.status-dot.offline{box-shadow:none}
+.status-text{color:#344054;font-weight:600}
+
+/* Main / hero */
+.main-container{max-width:1320px;padding:2.4rem 1.5rem 4rem}
+.hero-section{
+  text-align:left;max-width:850px;margin:0 0 2rem;
+}
+.hero-badge{
+  background:#eef4ff;border:1px solid #d6e3f8;color:#175cd3;
+  border-radius:6px;text-transform:none;letter-spacing:0;
+  padding:.34rem .68rem;margin-bottom:.85rem;
+}
+.hero-title{
+  color:#101828;font-size:clamp(2.15rem,4vw,3rem);
+  line-height:1.08;letter-spacing:-.045em;margin-bottom:.55rem;
+}
+.hero-subtitle{color:#667085;font-size:1rem;max-width:720px}
+
+/* Cards */
+.card{
+  background:rgba(255,255,255,.98);
+  border:1px solid var(--border-color);
+  border-radius:12px;
+  padding:1.45rem;
+  margin-bottom:1.15rem;
+  box-shadow:var(--shadow-sm);
+}
+.card:hover{
+  border-color:#d5dce6;
+  box-shadow:var(--shadow-md);
+}
+.card-header{margin-bottom:1.1rem}
+.card-header h2,.card-header h3{
+  color:#172033;font-size:1.06rem;font-weight:700;
+}
+.card-subtitle{color:#667085;font-size:.8rem}
+.card-header-small{color:#7a8699;font-size:.7rem;letter-spacing:.08em}
+
+/* Upload */
+.dropzone{
+  background:#fbfcfe;
+  border:1.5px dashed #b8c4d3;
+  border-radius:10px;
+  padding:3.2rem 1.5rem;
+}
+.dropzone:hover,.dropzone.dragover{
+  border-color:#84a8dd;
+  background:#f7faff;
+}
+.dropzone-icon{
+  width:54px;height:54px;border-radius:10px;
+  background:#eef4ff;color:#386bb0;
+}
+.dropzone:hover .dropzone-icon{color:#175cd3;transform:translateY(-1px)}
+.drag-prompt{color:#25334a;font-size:1rem}
+.browse-prompt,.dropzone-footer{color:#667085}
+.btn-text{color:#175cd3;text-decoration:none}
+.btn-text:hover{text-decoration:underline}
+.dot-divider{color:#cbd5e1}
+.file-preview-panel{
+  background:#f8fafc;border-color:#e4e9f0;border-radius:9px;
+}
+.file-icon{color:#175cd3}
+
+/* Buttons */
+.btn{
+  border-radius:8px;
+  font-size:.84rem;
+  padding:.7rem 1.15rem;
+  letter-spacing:.005em;
+  box-shadow:none;
+}
+.btn-primary{
+  background:#175cd3;border-color:#175cd3;
+  box-shadow:0 1px 2px rgba(23,92,211,.15);
+}
+.btn-primary:hover:not(:disabled){
+  background:#154eae;border-color:#154eae;
+  box-shadow:0 4px 10px rgba(23,92,211,.16);
+}
+.btn-secondary{
+  background:#fff;border-color:#d0d5dd;color:#344054;
+}
+.btn-secondary:hover{background:#f9fafb;border-color:#98a2b3}
+.btn-live{
+  background:#fff;color:#087443;border-color:#9fd7bd;
+}
+.btn-live:hover:not(:disabled){background:#f0fdf6;box-shadow:none}
+.btn-live.is-active{background:#fff5f4;color:#b42318;border-color:#efb0a9}
+.btn-live.is-active:hover:not(:disabled){background:#fff0ee;box-shadow:none}
+
+/* Status / errors */
+.error-box{background:#fff5f4;border-color:#f4b7b1;color:#912018}
+.error-dismiss{color:#912018}
+.live-status-row{color:#667085}
+.live-dot{background:#98a2b3}
+.live-dot.pulsing{background:#087443;box-shadow:none}
+
+/* Results */
+.verdict-card{
+  border-width:1px;
+  background:linear-gradient(180deg,#fff 0%,#fbfdff 100%);
+}
+.verdict-title{font-size:1.8rem;letter-spacing:-.025em}
+.verdict-message{
+  color:#344054;background:#f8fafc;border-color:#e4e9f0;
+  border-left-color:#5b84c4;
+}
+.scores-grid{gap:1rem}
+.score-card{
+  background:#f8fafc;border-color:#e4e9f0;
+}
+.score-label{color:#667085}
+.score-value{color:#172033}
+.meter-bar{height:7px;background:#e9edf3}
+.spoof-fill{background:#d92d20}
+.bonafide-fill{background:#079455}
+
+/* Decision flow */
+.flow-container{gap:.65rem}
+.flow-step{
+  background:#f8fafc;border-color:#e4e9f0;border-radius:9px;
+}
+.step-num{
+  background:#eef2f6;border-color:#e4e9f0;color:#667085;
+}
+.flow-step.completed .step-num{
+  background:#eef4ff;color:#175cd3;border-color:#c7d7f1;
+}
+.step-title{color:#7a8699}
+.step-desc{color:#172033}
+.flow-arrow{color:#a7b0bd}
+.decision-explanation{
+  background:#f8fafc;color:#667085;border:1px solid #eef1f5;
+}
+
+/* Timeline */
+.timeline-track{
+  background:#f8fafc;border-color:#dfe5ec;
+  height:52px;
+}
+.timeline-segment{border-right:1px solid rgba(255,255,255,.7)}
+.timeline-segment:hover{
+  transform:scaleY(1.04);
+  box-shadow:0 2px 8px rgba(16,24,40,.12);
+}
+.timeline-segment.spoof-window{
+  border:2px solid #d92d20!important;
+  box-shadow:inset 0 0 7px rgba(217,45,32,.22);
+}
+.tick-mark{background:#c3ccd7}
+.tick-label{color:#7a8699}
+.timeline-tooltip{
+  background:#fff;border-color:#d0d5dd;color:#172033;
+  box-shadow:0 10px 24px rgba(16,24,40,.12);
+}
+.tooltip-title{color:#667085;border-bottom-color:#e4e7ec}
+.active-segment-panel{background:#f8fafc;border-color:#e4e9f0}
+
+/* Table */
+.window-table{font-size:.84rem}
+.window-table th{
+  background:#f8fafc;color:#667085;
+  border-bottom-color:#e4e9f0;
+}
+.window-table td{color:#344054;border-bottom-color:#edf0f3}
+.window-table tbody tr:hover{background:#f8fafc}
+.table-badge{border-radius:6px}
+
+/* Bottom stats */
+.stat-item,.info-row{
+  background:#f8fafc;border-color:#e4e9f0;border-radius:8px;
+}
+.stat-label,.info-key{color:#667085}
+.stat-value,.info-val{color:#172033}
+
+/* More product-like spacing */
+.upload-card{position:relative}
+#live-monitor-card .action-bar{margin-top:.1rem}
+#live-monitor-card{background:#fff}
+.reset-container{margin-top:1.35rem}
+
+/* Mobile */
+@media(max-width:768px){
+  .main-container{padding:1.6rem 1rem 3rem}
+  .hero-title{font-size:2rem}
+  .hero-section{margin-bottom:1.5rem}
+  .nav-container{padding:.7rem 1rem}
+  .brand-subtitle{display:none}
+  .health-status{font-size:.72rem}
+}
+@media(max-width:640px){
+  .card{padding:1.1rem}
+  .dropzone{padding:2.4rem 1rem}
+  .dropzone-footer{flex-wrap:wrap}
+  .verdict-header-group{align-items:flex-start}
+  .verdict-title{font-size:1.5rem}
+  .flow-container{justify-content:flex-start}
+}
+
+</style>
+
+<style>
+button:focus-visible,[tabindex="0"]:focus-visible{
+  outline:3px solid rgba(23,92,211,.18);
+  outline-offset:2px;
+}
+audio{accent-color:#175cd3}
+</style>
+
+
+<style>
+/* Centered Phantom Vox hero */
+.hero-section{
+  width:100%;
+  max-width:920px !important;
+  margin:2rem auto 2.2rem !important;
+  text-align:center !important;
+}
+
+.hero-badge{
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+.hero-subtitle{
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+@media (max-width:768px){
+  .hero-section{
+    width:100%;
+    max-width:100% !important;
+    margin:1.5rem auto 1.6rem !important;
+  }
+}
+</style>
+
+
+<style>
+/* Restore the premium colored hero BOX while keeping it centered */
+.hero-section{
+  position:relative !important;
+  width:100% !important;
+  max-width:900px !important;
+  margin:2rem auto 2.2rem !important;
+  padding:2.15rem 2.5rem 2.05rem !important;
+  text-align:center !important;
+  border:1px solid #cfe0f5 !important;
+  border-radius:18px !important;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(59,130,246,.13), transparent 28%),
+    radial-gradient(circle at 10% 90%, rgba(16,185,129,.07), transparent 25%),
+    linear-gradient(135deg,#ffffff 0%,#f8fbff 58%,#eff8ff 100%) !important;
+  box-shadow:
+    0 12px 35px rgba(37,99,235,.08),
+    inset 0 1px 0 rgba(255,255,255,.95) !important;
+  overflow:hidden !important;
+}
+
+/* subtle colored corner shape */
+.hero-section::after{
+  content:"" !important;
+  position:absolute !important;
+  width:180px !important;
+  height:180px !important;
+  right:-65px !important;
+  top:-75px !important;
+  border-radius:50% !important;
+  background:rgba(59,130,246,.09) !important;
+  pointer-events:none !important;
+}
+
+.hero-badge{
+  position:relative !important;
+  z-index:1 !important;
+  display:inline-flex !important;
+  margin:0 auto .85rem !important;
+  background:#eef4ff !important;
+  border:1px solid #c9daf4 !important;
+  color:#175cd3 !important;
+  box-shadow:0 2px 7px rgba(23,92,211,.06) !important;
+}
+
+.hero-title{
+  position:relative !important;
+  z-index:1 !important;
+  color:#101828 !important;
+  font-weight:850 !important;
+}
+
+.hero-subtitle{
+  position:relative !important;
+  z-index:1 !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  color:#667085 !important;
+}
+
+@media(max-width:768px){
+  .hero-section{
+    max-width:100% !important;
+    padding:1.7rem 1.25rem !important;
+    margin:1.5rem auto 1.6rem !important;
+  }
+}
+</style>
+
+
+</style>
+
+</head>
+<body>
+
+  <!-- TOP NAVBAR -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">PHANTOM VOX</span>
+          <span class="brand-subtitle">Voice Cloning Detection & Prevention</span>
+        </div>
+      </div>
+      <div class="health-status" id="health-indicator">
+        <span class="status-dot offline" id="health-dot"></span>
+        <span class="status-text" id="health-text">Checking...</span>
+        <span class="status-device" id="health-device"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- HERO / INTRO -->
+    <section class="hero-section">
+      <div class="hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+        <span>AASIST • Anti-Spoofing AI</span>
+      </div>
+      <h1 class="hero-title">Detect. Verify. Prevent.</h1>
+      <p class="hero-subtitle">
+        AI-powered voice cloning detection using AASIST with real-time prevention decisions.
+      </p>
+    </section>
+
+    <!-- ERROR HANDLING BOX -->
+    <div class="error-box hidden" id="error-box">
+      <div class="error-content">
+        <svg class="error-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="error-message">Error notification details</span>
+      </div>
+      <button type="button" class="error-dismiss" id="error-dismiss" aria-label="Dismiss error">&times;</button>
+    </div>
+
+    <!-- UPLOAD CARD -->
+    <section class="card upload-card" id="upload-card">
+      <div class="card-header">
+        <h2>Analyze Audio</h2>
+        <span class="card-subtitle">Upload an audio recording for spectro-temporal graph attention analysis</span>
+      </div>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload audio file dropzone">
+        <input type="file" id="file-input" accept=".wav,.flac,.ogg" class="hidden-file-input">
+        <div class="dropzone-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="dropzone-text">
+          <span class="drag-prompt">Drag & drop an audio file here</span>
+          <span class="browse-prompt">or <button type="button" class="btn-text" id="browse-btn">Browse Files</button></span>
+        </div>
+        <div class="dropzone-footer">
+          <span>Accepted formats: <strong>WAV • FLAC • OGG</strong></span>
+          <span class="dot-divider">•</span>
+          <span>Max file size: <strong>50 MB</strong></span>
+        </div>
+      </div>
+
+      <!-- FILE SELECTED PREVIEW PANEL -->
+      <div class="file-preview-panel hidden" id="file-preview-panel">
+        <div class="file-info-row">
+          <div class="file-details">
+            <svg class="file-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+            <div>
+              <div class="file-name" id="preview-filename">filename.wav</div>
+              <div class="file-size" id="preview-filesize">0 MB</div>
+            </div>
+          </div>
+          <button type="button" class="btn-icon" id="remove-file-btn" title="Remove selected file">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="audio-player-wrapper">
+          <audio controls id="audio-preview"></audio>
+        </div>
+
+        <div class="action-bar">
+          <button type="button" class="btn btn-primary" id="analyze-btn" disabled>
+            <span class="btn-text-content" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+              <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span>ANALYZE VOICE</span>
+            </span>
+            <span class="spinner hidden" id="analyze-spinner"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE CALL MONITORING CARD -->
+    <section class="card" id="live-monitor-card">
+      <div class="card-header">
+        <h2>Live Call Monitoring</h2>
+        <span class="card-subtitle">Analyzes the other caller's voice in real time from your speaker output — never your microphone</span>
+      </div>
+
+      <div class="action-bar">
+        <button type="button" class="btn btn-live" id="monitor-toggle-btn">
+          <span id="monitor-btn-text">Start Live Monitoring</span>
+        </button>
+      </div>
+
+      <div class="live-status-row">
+        <span class="live-dot" id="monitor-dot"></span>
+        <span id="monitor-status-text">Not monitoring</span>
+      </div>
+
+      <p class="live-note">
+        You'll be asked to confirm before anything is recorded. Each 5-second chunk is analyzed and added to a running session below — the verdict card shows the average across every chunk analyzed so far, and the timeline/table below list every chunk, not just the latest one. Nothing is sent anywhere until you start monitoring, and you can stop at any time.
+      </p>
+    </section>
+
+    <!-- RESULTS SECTION (Initially hidden) -->
+    <div class="results-container hidden" id="results-container">
+      
+      <!-- VERDICT CARD -->
+      <section class="card verdict-card" id="verdict-card">
+        <div class="card-header-small">DETECTION RESULT</div>
+        
+        <div class="verdict-main">
+          <div class="verdict-header-group">
+            <h2 class="verdict-title" id="verdict-prediction">BONAFIDE</h2>
+            <div class="action-badge" id="verdict-action-badge">
+              <span id="action-badge-icon">✓</span>
+              <span id="action-badge-text">ALLOWED</span>
+            </div>
+          </div>
+          <p class="verdict-message" id="verdict-message">
+            Audio passed automated verification checks.
+          </p>
+        </div>
+
+        <!-- CONFIDENCE SCORES -->
+        <div class="scores-grid">
+          <div class="score-card">
+            <div class="score-header">
+              <span class="score-label">Mean Spoof Score</span>
+              <span class="score-value" id="spoof-score-val">0.0%</span>
+            </div>
+            <div class="meter-bar">
+              <div class="meter-fill spoof-fill" id="spoof-meter" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="score-card">
+            <div class="score-header">
+              <span class="score-label">Bonafide Score</span>
+              <span class="score-value" id="bonafide-score-val">0.0%</span>
+            </div>
+            <div class="meter-bar">
+              <div class="meter-fill bonafide-fill" id="bonafide-meter" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PREVENTION DECISION -->
+      <section class="card decision-card">
+        <div class="card-header">
+          <h3>Prevention Decision Flow</h3>
+          <span class="card-subtitle">System policy execution path</span>
+        </div>
+        
+        <div class="flow-container">
+          <div class="flow-step completed">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <span class="step-title">Audio Received</span>
+              <span class="step-desc">Validated</span>
+            </div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step completed">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <span class="step-title">AI Analysis</span>
+              <span class="step-desc">AASIST Model</span>
+            </div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step completed" id="flow-verdict-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <span class="step-title">Verdict</span>
+              <span class="step-desc" id="flow-verdict-text">BONAFIDE</span>
+            </div>
+          </div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step action-node" id="flow-action-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <span class="step-title">Prevention Action</span>
+              <span class="step-desc" id="flow-action-text">ALLOWED</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="decision-explanation" id="decision-explanation-text">
+          Audio passed automated prevention policy checks.
+        </div>
+      </section>
+
+      <!-- TIMELINE — CORE FEATURE -->
+      <section class="card timeline-card">
+        <div class="timeline-header-row">
+          <div>
+            <h3>Audio Analysis Timeline</h3>
+            <span class="card-subtitle">Suspicious segments are highlighted by spoof probability</span>
+          </div>
+          <div class="timeline-legend">
+            <div class="legend-item"><span class="legend-color legend-low"></span> Low Spoof Risk</div>
+            <div class="legend-item"><span class="legend-color legend-med"></span> Medium</div>
+            <div class="legend-item"><span class="legend-color legend-high"></span> High Risk</div>
+          </div>
+        </div>
+
+        <div class="timeline-wrapper">
+          <div class="timeline-track" id="timeline-track">
+            <!-- Window segments injected dynamically -->
+          </div>
+          <div class="timeline-ticks" id="timeline-ticks">
+            <!-- Dynamic time ticks injected here -->
+          </div>
+        </div>
+
+        <!-- Active Segment Details for Touch/Click -->
+        <div class="active-segment-panel hidden" id="active-segment-panel">
+          <div class="segment-panel-title">Selected Window Segment</div>
+          <div class="segment-panel-grid" id="active-segment-details"></div>
+        </div>
+      </section>
+
+      <!-- WINDOW DETAILS TABLE -->
+      <section class="card windows-card">
+        <div class="card-header">
+          <h3>Window Analysis</h3>
+          <span class="card-subtitle">Detailed breakdown of ~4-second overlapping evaluation windows</span>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="window-table">
+            <thead>
+              <tr>
+                <th>Window</th>
+                <th>Time Range</th>
+                <th>Spoof Probability</th>
+                <th>Bonafide Probability</th>
+                <th>Prediction</th>
+              </tr>
+            </thead>
+            <tbody id="window-table-body">
+              <!-- Window rows -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- DETAIL STATISTICS & FILE INFO -->
+      <div class="bottom-grid">
+        <section class="card stats-card">
+          <div class="card-header-small">METRICS SUMMARY</div>
+          <div class="stat-items">
+            <div class="stat-item">
+              <span class="stat-label">Duration</span>
+              <span class="stat-value" id="stat-duration">0.00s</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Windows Analyzed</span>
+              <span class="stat-value" id="stat-windows">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Mean Spoof Score</span>
+              <span class="stat-value" id="stat-mean-spoof">0.00%</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Spoof Window Ratio</span>
+              <span class="stat-value" id="stat-ratio">0.00%</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card info-card">
+          <div class="card-header-small">FILE METADATA</div>
+          <div class="info-items">
+            <div class="info-row">
+              <span class="info-key">Filename</span>
+              <span class="info-val" id="info-filename">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Total Duration</span>
+              <span class="info-val" id="info-duration">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Evaluated Windows</span>
+              <span class="info-val" id="info-windows">-</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RESET BUTTON -->
+      <div class="reset-container">
+        <button type="button" class="btn btn-secondary" id="reset-btn">
+          <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span>Analyze Another File</span>
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FLOATING TOOLTIP FOR TIMELINE -->
+  <div id="timeline-tooltip" class="timeline-tooltip hidden"></div>
+
+  <!-- JAVASCRIPT IMPLEMENTATION -->
+  <script>
+    // ==========================================================================
+    // API & DOM INITIALIZATION
+    // ==========================================================================
+    const API_BASE = "http://127.0.0.1:8000";
+
+    let selectedFile = null;
+    let audioObjectURL = null;
+
+    // DOM References
+    const healthIndicator = document.getElementById('health-indicator');
+    const healthDot = document.getElementById('health-dot');
+    const healthText = document.getElementById('health-text');
+    const healthDevice = document.getElementById('health-device');
+
+    const errorBox = document.getElementById('error-box');
+    const errorMessage = document.getElementById('error-message');
+    const errorDismiss = document.getElementById('error-dismiss');
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const browseBtn = document.getElementById('browse-btn');
+
+    const filePreviewPanel = document.getElementById('file-preview-panel');
+    const previewFilename = document.getElementById('preview-filename');
+    const previewFilesize = document.getElementById('preview-filesize');
+    const removeFileBtn = document.getElementById('remove-file-btn');
+    const audioPreview = document.getElementById('audio-preview');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const analyzeSpinner = document.getElementById('analyze-spinner');
+
+    const resultsContainer = document.getElementById('results-container');
+    const verdictCard = document.getElementById('verdict-card');
+    const verdictPrediction = document.getElementById('verdict-prediction');
+    const verdictActionBadge = document.getElementById('verdict-action-badge');
+    const actionBadgeIcon = document.getElementById('action-badge-icon');
+    const actionBadgeText = document.getElementById('action-badge-text');
+    const verdictMessage = document.getElementById('verdict-message');
+
+    const spoofScoreVal = document.getElementById('spoof-score-val');
+    const bonafideScoreVal = document.getElementById('bonafide-score-val');
+    const spoofMeter = document.getElementById('spoof-meter');
+    const bonafideMeter = document.getElementById('bonafide-meter');
+
+    const flowVerdictText = document.getElementById('flow-verdict-text');
+    const flowVerdictStep = document.getElementById('flow-verdict-step');
+    const flowActionText = document.getElementById('flow-action-text');
+    const flowActionStep = document.getElementById('flow-action-step');
+    const decisionExplanationText = document.getElementById('decision-explanation-text');
+
+    const timelineTrack = document.getElementById('timeline-track');
+    const timelineTicks = document.getElementById('timeline-ticks');
+    const activeSegmentPanel = document.getElementById('active-segment-panel');
+    const activeSegmentDetails = document.getElementById('active-segment-details');
+    const timelineTooltip = document.getElementById('timeline-tooltip');
+
+    const windowTableBody = document.getElementById('window-table-body');
+
+    const statDuration = document.getElementById('stat-duration');
+    const statWindows = document.getElementById('stat-windows');
+    const statMeanSpoof = document.getElementById('stat-mean-spoof');
+    const statRatio = document.getElementById('stat-ratio');
+
+    const infoFilename = document.getElementById('info-filename');
+    const infoDuration = document.getElementById('info-duration');
+    const infoWindows = document.getElementById('info-windows');
+
+    const resetBtn = document.getElementById('reset-btn');
+
+    const monitorToggleBtn = document.getElementById('monitor-toggle-btn');
+    const monitorBtnText = document.getElementById('monitor-btn-text');
+    const monitorDot = document.getElementById('monitor-dot');
+    const monitorStatusText = document.getElementById('monitor-status-text');
+
+    let isMonitoring = false;
+    let monitorPollTimer = null;
+
+    // Accumulated state for the live session — spans every chunk analyzed
+    // since "Start Live Monitoring" was last pressed, not just the latest one.
+    let lastSeenSeq = -1;
+    let liveWindows = [];      // every RawNet window from every chunk so far, with session-relative timestamps
+    let liveTimeOffset = 0;    // running total duration of chunks already folded into liveWindows
+    let liveChunkCount = 0;
+
+    // Mirrors the backend's thresholds/policy (main_rawnet.py) so the
+    // client-computed running average uses the exact same rules.
+    const RAWNET_FAKE_THRESHOLD = 0.50;
+    const BLOCK_THRESHOLD = 0.60;
+    const FLAG_SPOOF_SCORE = 0.30;
+    const FLAG_WINDOW_RATIO = 0.25;
+
+    function evaluatePolicyClient(meanSpoofScore, spoofWindowRatio) {
+      if (meanSpoofScore >= BLOCK_THRESHOLD) {
+        return {
+          action: "BLOCKED",
+          message: "This audio shows strong signs of being an AI-generated or cloned voice and has been blocked."
+        };
+      }
+      if (meanSpoofScore >= FLAG_SPOOF_SCORE || spoofWindowRatio >= FLAG_WINDOW_RATIO) {
+        return {
+          action: "FLAGGED_FOR_REVIEW",
+          message: "Parts of this audio look suspicious. It has been flagged for manual review rather than blocked outright."
+        };
+      }
+      return {
+        action: "ALLOWED",
+        message: "No significant signs of voice cloning were detected."
+      };
+    }
+
+    // Builds the same shape of object the /detect and /monitor/status
+    // endpoints return, but aggregated across every window from every
+    // chunk seen so far in this live session.
+    function buildLiveAggregate() {
+      const totalWindows = liveWindows.length;
+      if (totalWindows === 0) return null;
+
+      let spoofSum = 0;
+      let bonafideSum = 0;
+      let spoofCount = 0;
+
+      liveWindows.forEach(w => {
+        spoofSum += w.spoof_probability;
+        bonafideSum += w.bonafide_probability;
+        if (w.prediction === 'SPOOF') spoofCount += 1;
+      });
+
+      const meanSpoof = spoofSum / totalWindows;
+      const meanBonafide = bonafideSum / totalWindows;
+      const spoofWindowRatio = spoofCount / totalWindows;
+      const finalPrediction = meanSpoof >= RAWNET_FAKE_THRESHOLD ? 'SPOOF' : 'BONAFIDE';
+      const { action, message } = evaluatePolicyClient(meanSpoof, spoofWindowRatio);
+      const durationSeconds = liveWindows[totalWindows - 1].end_time;
+
+      return {
+        filename: `Live session — ${liveChunkCount} chunk${liveChunkCount === 1 ? '' : 's'}`,
+        duration_seconds: durationSeconds,
+        windows_analyzed: totalWindows,
+        mean_spoof_score: meanSpoof,
+        mean_bonafide_score: meanBonafide,
+        spoof_window_ratio: spoofWindowRatio,
+        final_prediction: finalPrediction,
+        action,
+        message,
+        windows: liveWindows,
+      };
+    }
+
+    // ==========================================================================
+    // INITIALIZATION & EVENT LISTENERS
+    // ==========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      checkBackendHealth();
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      // File browsing & Dropzone
+      browseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+      });
+
+      dropzone.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      dropzone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleFileSelect(e.target.files[0]);
+        }
+      });
+
+      // Drag & Drop
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('dragover');
+        });
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        if (dt.files && dt.files[0]) {
+          handleFileSelect(dt.files[0]);
+        }
+      });
+
+      // Buttons
+      removeFileBtn.addEventListener('click', resetFileSelection);
+      analyzeBtn.addEventListener('click', analyzeAudio);
+      errorDismiss.addEventListener('click', hideError);
+      resetBtn.addEventListener('click', resetAnalysis);
+      monitorToggleBtn.addEventListener('click', toggleMonitoring);
+    }
+
+    // ==========================================================================
+    // LIVE CALL MONITORING
+    // ==========================================================================
+    function toggleMonitoring() {
+      isMonitoring ? stopMonitoring() : startMonitoring();
+    }
+
+    async function startMonitoring() {
+      const consented = window.confirm(
+        "This will record audio from your speakers (the other caller's voice) " +
+        "in 5-second chunks and analyze it for AI voice cloning.\n\n" +
+        "Nothing is recorded until you agree, and you can stop at any time.\n\n" +
+        "Start recording and analyzing this call?"
+      );
+      if (!consented) return;
+
+      hideError();
+      monitorStatusText.textContent = "Starting...";
+
+      try {
+        const response = await fetch(`${API_BASE}/monitor/start`, { method: 'POST' });
+        const data = await response.json();
+
+        if (!response.ok) {
+          showError(data.detail || "Couldn't start live monitoring.");
+          monitorStatusText.textContent = "Not monitoring";
+          return;
+        }
+
+        isMonitoring = true;
+        lastSeenSeq = -1;
+        liveWindows = [];
+        liveTimeOffset = 0;
+        liveChunkCount = 0;
+        monitorToggleBtn.classList.add('is-active');
+        monitorBtnText.textContent = "Stop Live Monitoring";
+        monitorDot.classList.add('pulsing');
+        monitorStatusText.textContent = "Listening for the caller's voice...";
+        monitorPollTimer = setInterval(pollMonitorStatus, 2000);
+
+      } catch (err) {
+        showError("Unable to connect to the detection server. Make sure FastAPI is running at 127.0.0.1:8000.");
+        monitorStatusText.textContent = "Not monitoring";
+      }
+    }
+
+    async function stopMonitoring() {
+      try {
+        await fetch(`${API_BASE}/monitor/stop`, { method: 'POST' });
+      } catch (err) {
+        // server may already be down; still reset the UI below
+      }
+      isMonitoring = false;
+      clearInterval(monitorPollTimer);
+      monitorToggleBtn.classList.remove('is-active');
+      monitorBtnText.textContent = "Start Live Monitoring";
+      monitorDot.classList.remove('pulsing');
+      monitorStatusText.textContent = "Not monitoring";
+    }
+
+    async function pollMonitorStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/monitor/status`);
+        if (!response.ok) return;
+        const data = await response.json();
+
+        if (data.error) {
+          monitorStatusText.textContent = `Error: ${data.error}`;
+          return;
+        }
+
+        const history = data.history || [];
+
+        // Only fold in chunks we haven't already added to the running
+        // session (identified by their server-assigned seq, not filename —
+        // the backend can reuse the same filename for every chunk).
+        const newEntries = history
+          .filter(entry => typeof entry.seq === 'number' && entry.seq > lastSeenSeq)
+          .sort((a, b) => a.seq - b.seq);
+
+        if (newEntries.length === 0) return;
+
+        newEntries.forEach(entry => {
+          const chunkDuration = entry.duration_seconds || 0;
+
+          (entry.windows || []).forEach(w => {
+            liveWindows.push({
+              ...w,
+              start_time: w.start_time + liveTimeOffset,
+              end_time: w.end_time + liveTimeOffset,
+            });
+          });
+
+          liveTimeOffset += chunkDuration;
+          liveChunkCount += 1;
+          lastSeenSeq = entry.seq;
+        });
+
+        const latestEntry = newEntries[newEntries.length - 1];
+        const aggregate = buildLiveAggregate();
+
+        if (aggregate) {
+          monitorStatusText.textContent =
+            `Chunk #${liveChunkCount} analyzed (${latestEntry.final_prediction}) — ` +
+            `session average: ${(aggregate.mean_spoof_score * 100).toFixed(1)}% spoof across ${aggregate.windows_analyzed} windows`;
+          renderMonitorResult(aggregate);
+        }
+      } catch (err) {
+        monitorStatusText.textContent = "Lost connection to backend...";
+      }
+    }
+
+    function renderMonitorResult(data) {
+      // Reuses the exact same rendering pipeline as the upload flow, but
+      // fed with the accumulated session aggregate instead of one chunk.
+      const firstResult = resultsContainer.classList.contains('hidden');
+      resultsContainer.classList.remove('hidden');
+
+      updateVerdict(data);
+      renderTimeline(data);
+      renderWindowDetails(data.windows || []);
+      updateMetricsAndMetadata(data);
+
+      if (firstResult) {
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // ==========================================================================
+    // BACKEND HEALTH CHECK
+    // ==========================================================================
+    async function checkBackendHealth() {
+      try {
+        const response = await fetch(`${API_BASE}/health`, { method: 'GET' });
+        if (response.ok) {
+          const data = await response.json();
+          healthDot.className = "status-dot online";
+          healthText.textContent = "Backend Online";
+          
+          const device = (data.device || "").toLowerCase();
+          if (device === "cuda") {
+            healthDevice.textContent = "GPU • CUDA";
+          } else if (device) {
+            healthDevice.textContent = device.toUpperCase();
+          } else {
+            healthDevice.textContent = "CPU";
+          }
+        } else {
+          setBackendOffline();
+        }
+      } catch (err) {
+        setBackendOffline();
+      }
+    }
+
+    function setBackendOffline() {
+      healthDot.className = "status-dot offline";
+      healthText.textContent = "Backend Offline";
+      healthDevice.textContent = "";
+    }
+
+    // ==========================================================================
+    // FILE HANDLING & VALIDATION
+    // ==========================================================================
+    function handleFileSelect(file) {
+      if (!validateFile(file)) return;
+
+      selectedFile = file;
+
+      // Update UI file preview
+      previewFilename.textContent = file.name;
+      previewFilesize.textContent = formatBytes(file.size);
+
+      // Create Audio Preview
+      if (audioObjectURL) {
+        URL.revokeObjectURL(audioObjectURL);
+      }
+      audioObjectURL = URL.createObjectURL(file);
+      audioPreview.src = audioObjectURL;
+
+      dropzone.classList.add('hidden');
+      filePreviewPanel.classList.remove('hidden');
+      analyzeBtn.disabled = false;
+      hideError();
+    }
+
+    function validateFile(file) {
+      if (!file) return false;
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      const allowedExts = ['wav', 'flac', 'ogg'];
+
+      if (!allowedExts.includes(ext)) {
+        showError("Unsupported file type. Please upload WAV, FLAC, or OGG.");
+        return false;
+      }
+
+      const maxSize = 50 * 1024 * 1024; // 50 MB
+      if (file.size > maxSize) {
+        showError("File size exceeds 50 MB limit. Please select a smaller file.");
+        return false;
+      }
+
+      return true;
+    }
+
+    function resetFileSelection() {
+      selectedFile = null;
+      fileInput.value = '';
+
+      if (audioObjectURL) {
+        URL.revokeObjectURL(audioObjectURL);
+        audioObjectURL = null;
+      }
+      audioPreview.src = '';
+
+      filePreviewPanel.classList.add('hidden');
+      dropzone.classList.remove('hidden');
+      analyzeBtn.disabled = true;
+    }
+
+    // ==========================================================================
+    // AUDIO ANALYSIS (API INFERENCE)
+    // ==========================================================================
+    async function analyzeAudio() {
+      if (!selectedFile) return;
+
+      // Set Loading State
+      analyzeBtn.disabled = true;
+      analyzeSpinner.classList.remove('hidden');
+      const btnTextContent = analyzeBtn.querySelector('.btn-text-content');
+      if (btnTextContent) btnTextContent.style.display = 'none';
+
+      hideError();
+
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const response = await fetch(`${API_BASE}/detect`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          if (response.status === 400) {
+            try {
+              const errorData = await response.json();
+              showError(errorData.detail || "Invalid audio file payload.");
+            } catch (_) {
+              showError("Detection failed (HTTP 400). Please verify audio format.");
+            }
+          } else {
+            showError(`Detection failed with status code ${response.status}. Please try again.`);
+          }
+          return;
+        }
+
+        const data = await response.json();
+        displayResult(data);
+
+      } catch (err) {
+        showError("Unable to connect to the detection server. Make sure FastAPI is running at 127.0.0.1:8000.");
+      } finally {
+        // Reset Button Loading State
+        analyzeBtn.disabled = false;
+        analyzeSpinner.classList.add('hidden');
+        const btnTextContent = analyzeBtn.querySelector('.btn-text-content');
+        if (btnTextContent) btnTextContent.style.display = 'inline-flex';
+      }
+    }
+
+    // ==========================================================================
+    // RENDER RESULTS & UI METRICS
+    // ==========================================================================
+    function displayResult(data) {
+      resultsContainer.classList.remove('hidden');
+
+      updateVerdict(data);
+      renderTimeline(data);
+      renderWindowDetails(data.windows || []);
+      updateMetricsAndMetadata(data);
+
+      resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function updateVerdict(data) {
+      const prediction = data.final_prediction; // SPOOF or BONAFIDE
+      const action = data.action; // ALLOWED, FLAGGED_FOR_REVIEW, BLOCKED
+      const msg = data.message;
+
+      // Verdict Prediction Title
+      if (prediction === 'SPOOF') {
+        verdictPrediction.textContent = "SPOOF DETECTED";
+        verdictPrediction.className = "verdict-title spoof-text";
+        verdictCard.style.borderColor = "var(--accent-red-border)";
+        flowVerdictText.textContent = "SPOOF";
+        flowVerdictText.className = "step-desc spoof-text";
+      } else {
+        verdictPrediction.textContent = "BONAFIDE";
+        verdictPrediction.className = "verdict-title bonafide-text";
+        verdictCard.style.borderColor = "var(--accent-green-border)";
+        flowVerdictText.textContent = "BONAFIDE";
+        flowVerdictText.className = "step-desc bonafide-text";
+      }
+
+      // Action Badge
+      verdictActionBadge.className = "action-badge";
+      flowActionStep.className = "flow-step action-node";
+
+      if (action === "ALLOWED") {
+        verdictActionBadge.classList.add("action-allowed");
+        actionBadgeIcon.textContent = "✓";
+        actionBadgeText.textContent = "ALLOWED";
+        flowActionText.textContent = "ALLOWED";
+        flowActionStep.classList.add("action-allowed");
+      } else if (action === "FLAGGED_FOR_REVIEW") {
+        verdictActionBadge.classList.add("action-flagged");
+        actionBadgeIcon.textContent = "⚠";
+        actionBadgeText.textContent = "FLAGGED FOR REVIEW";
+        flowActionText.textContent = "FLAGGED FOR REVIEW";
+        flowActionStep.classList.add("action-flagged");
+      } else if (action === "BLOCKED") {
+        verdictActionBadge.classList.add("action-blocked");
+        actionBadgeIcon.textContent = "✕";
+        actionBadgeText.textContent = "BLOCKED";
+        flowActionText.textContent = "BLOCKED";
+        flowActionStep.classList.add("action-blocked");
+      }
+
+      // Message Display
+      const fallbackExplanation = getDefaultActionExplanation(action);
+      verdictMessage.textContent = msg || fallbackExplanation;
+      decisionExplanationText.textContent = msg || fallbackExplanation;
+
+      // Meter Scores
+      const spoofScore = data.mean_spoof_score !== undefined ? data.mean_spoof_score : 0;
+      const bonafideScore = data.mean_bonafide_score !== undefined ? data.mean_bonafide_score : (1 - spoofScore);
+
+      const spoofPct = (spoofScore * 100).toFixed(1);
+      const bonafidePct = (bonafideScore * 100).toFixed(1);
+
+      spoofScoreVal.textContent = `${spoofPct}%`;
+      bonafideScoreVal.textContent = `${bonafidePct}%`;
+
+      spoofMeter.style.width = `${Math.min(100, Math.max(0, spoofPct))}%`;
+      bonafideMeter.style.width = `${Math.min(100, Math.max(0, bonafidePct))}%`;
+    }
+
+    function getDefaultActionExplanation(action) {
+      switch(action) {
+        case 'ALLOWED':
+          return "Audio passed the automated prevention check.";
+        case 'FLAGGED_FOR_REVIEW':
+          return "Suspicious segments detected. Manual review recommended.";
+        case 'BLOCKED':
+          return "Audio was blocked because it exceeded the configured spoof detection threshold.";
+        default:
+          return "";
+      }
+    }
+
+    // ==========================================================================
+    // AUDIO TIMELINE COMPONENT
+    // ==========================================================================
+    function renderTimeline(data) {
+      timelineTrack.innerHTML = '';
+      timelineTicks.innerHTML = '';
+      activeSegmentPanel.classList.add('hidden');
+
+      const windows = data.windows || [];
+      const totalDuration = data.duration_seconds || 1;
+
+      windows.forEach((w, index) => {
+        const start = w.start_time;
+        const end = w.end_time;
+        const winDuration = Math.max(0.1, end - start);
+
+        const leftPct = (start / totalDuration) * 100;
+        const widthPct = (winDuration / totalDuration) * 100;
+
+        const spoofProb = w.spoof_probability;
+        const color = getRiskColor(spoofProb);
+        const isSpoof = w.prediction === 'SPOOF';
+
+        const seg = document.createElement('div');
+        seg.className = `timeline-segment ${isSpoof ? 'spoof-window' : ''}`;
+        seg.style.left = `${leftPct}%`;
+        seg.style.width = `${widthPct}%`;
+        seg.style.backgroundColor = color;
+
+        // Dataset for tooltip / mobile view
+        seg.dataset.windowIndex = index + 1;
+        seg.dataset.startTime = formatTimestamp(start);
+        seg.dataset.endTime = formatTimestamp(end);
+        seg.dataset.spoofProb = (w.spoof_probability * 100).toFixed(2);
+        seg.dataset.bonafideProb = (w.bonafide_probability * 100).toFixed(2);
+        seg.dataset.prediction = w.prediction;
+
+        // Hover Handlers for Tooltip
+        seg.addEventListener('mouseenter', (e) => showTooltip(e, seg));
+        seg.addEventListener('mousemove', positionTooltip);
+        seg.addEventListener('mouseleave', hideTooltip);
+
+        // Click / Touch Handler
+        seg.addEventListener('click', () => selectSegment(seg));
+
+        timelineTrack.appendChild(seg);
+      });
+
+      renderTimeScale(totalDuration);
+    }
+
+    function renderTimeScale(duration) {
+      timelineTicks.innerHTML = '';
+      if (!duration || duration <= 0) return;
+
+      let interval = 2;
+      if (duration > 20) interval = 5;
+      if (duration > 60) interval = 10;
+      if (duration > 180) interval = 30;
+
+      const ticks = [];
+      for (let t = 0; t < duration; t += interval) {
+        ticks.push(t);
+      }
+      if (ticks[ticks.length - 1] !== duration) {
+        ticks.push(duration);
+      }
+
+      ticks.forEach(t => {
+        const pct = (t / duration) * 100;
+        const tick = document.createElement('div');
+        tick.className = 'tick-item';
+        tick.style.left = `${pct}%`;
+        tick.innerHTML = `
+          <div class="tick-mark"></div>
+          <span class="tick-label">${t.toFixed(1)}s</span>
+        `;
+        timelineTicks.appendChild(tick);
+      });
+    }
+
+    function getRiskColor(probability) {
+      const p = Math.max(0, Math.min(1, probability));
+      const stops = [
+        { p: 0.0,  r: 16,  g: 185, b: 129 }, // Green #10b981
+        { p: 0.25, r: 132, g: 204, b: 22  }, // Lime #84cc16
+        { p: 0.5,  r: 245, g: 158, b: 11  }, // Amber #f59e0b
+        { p: 0.75, r: 249, g: 115, b: 22  }, // Orange #f97316
+        { p: 1.0,  r: 239, g: 68,  b: 68  }  // Red #ef4444
+      ];
+
+      for (let i = 0; i < stops.length - 1; i++) {
+        const s1 = stops[i];
+        const s2 = stops[i + 1];
+        if (p >= s1.p && p <= s2.p) {
+          const t = (p - s1.p) / (s2.p - s1.p);
+          const r = Math.round(s1.r + t * (s2.r - s1.r));
+          const g = Math.round(s1.g + t * (s2.g - s1.g));
+          const b = Math.round(s1.b + t * (s2.b - s1.b));
+          return `rgb(${r}, ${g}, ${b})`;
+        }
+      }
+      return `rgb(239, 68, 68)`;
+    }
+
+    // Tooltip Helpers
+    function showTooltip(e, elem) {
+      const idx = elem.dataset.windowIndex;
+      const start = elem.dataset.startTime;
+      const end = elem.dataset.endTime;
+      const spoof = elem.dataset.spoofProb;
+      const bonafide = elem.dataset.bonafideProb;
+      const pred = elem.dataset.prediction;
+      const predClass = pred === 'SPOOF' ? 'spoof-text-bold' : 'bonafide-text-bold';
+
+      timelineTooltip.innerHTML = `
+        <div class="tooltip-title">Window #${idx} (${start} — ${end})</div>
+        <div>Spoof Score: <strong>${spoof}%</strong></div>
+        <div>Bonafide Score: <strong>${bonafide}%</strong></div>
+        <div>Prediction: <span class="${predClass}">${pred}</span></div>
+      `;
+      timelineTooltip.classList.remove('hidden');
+      positionTooltip(e);
+    }
+
+    function positionTooltip(e) {
+      const x = e.clientX + 12;
+      const y = e.clientY - 40;
+      timelineTooltip.style.left = `${x}px`;
+      timelineTooltip.style.top = `${y}px`;
+    }
+
+    function hideTooltip() {
+      timelineTooltip.classList.add('hidden');
+    }
+
+    function selectSegment(elem) {
+      activeSegmentPanel.classList.remove('hidden');
+      const isSpoof = elem.dataset.prediction === 'SPOOF';
+
+      activeSegmentDetails.innerHTML = `
+        <div class="segment-stat">
+          <span class="segment-stat-lbl">Window #</span>
+          <span class="segment-stat-val">#${elem.dataset.windowIndex}</span>
+        </div>
+        <div class="segment-stat">
+          <span class="segment-stat-lbl">Time Range</span>
+          <span class="segment-stat-val">${elem.dataset.startTime} – ${elem.dataset.endTime}</span>
+        </div>
+        <div class="segment-stat">
+          <span class="segment-stat-lbl">Spoof Score</span>
+          <span class="segment-stat-val ${isSpoof ? 'spoof-text' : ''}">${elem.dataset.spoofProb}%</span>
+        </div>
+        <div class="segment-stat">
+          <span class="segment-stat-lbl">Bonafide Score</span>
+          <span class="segment-stat-val ${!isSpoof ? 'bonafide-text' : ''}">${elem.dataset.bonafideProb}%</span>
+        </div>
+        <div class="segment-stat">
+          <span class="segment-stat-lbl">Prediction</span>
+          <span class="segment-stat-val ${isSpoof ? 'spoof-text' : 'bonafide-text'}">${elem.dataset.prediction}</span>
+        </div>
+      `;
+    }
+
+    // ==========================================================================
+    // WINDOW TABLE & METRICS
+    // ==========================================================================
+    function renderWindowDetails(windows) {
+      windowTableBody.innerHTML = '';
+
+      windows.forEach((w, i) => {
+        const tr = document.createElement('tr');
+        const isSpoof = w.prediction === 'SPOOF';
+
+        const spoofPct = (w.spoof_probability * 100).toFixed(2);
+        const bonafidePct = (w.bonafide_probability * 100).toFixed(2);
+
+        tr.innerHTML = `
+          <td><strong>#${i + 1}</strong></td>
+          <td>${formatTimestamp(w.start_time)} – ${formatTimestamp(w.end_time)}</td>
+          <td class="${isSpoof ? 'spoof-text-bold' : ''}">${spoofPct}%</td>
+          <td class="${!isSpoof ? 'bonafide-text-bold' : ''}">${bonafidePct}%</td>
+          <td>
+            <span class="table-badge ${isSpoof ? 'badge-spoof' : 'badge-bonafide'}">
+              ${w.prediction}
+            </span>
+          </td>
+        `;
+        windowTableBody.appendChild(tr);
+      });
+    }
+
+    function updateMetricsAndMetadata(data) {
+      const dur = data.duration_seconds || 0;
+      const windowsCount = data.windows_analyzed || 0;
+      const spoofScore = (data.mean_spoof_score || 0) * 100;
+      const spoofRatio = (data.spoof_window_ratio || 0) * 100;
+
+      statDuration.textContent = `${dur.toFixed(2)} sec`;
+      statWindows.textContent = windowsCount;
+      statMeanSpoof.textContent = `${spoofScore.toFixed(2)}%`;
+      statRatio.textContent = `${spoofRatio.toFixed(2)}%`;
+
+      infoFilename.textContent = data.filename || (selectedFile ? selectedFile.name : '-');
+      infoDuration.textContent = `${dur.toFixed(2)} sec`;
+      infoWindows.textContent = windowsCount;
+    }
+
+    // ==========================================================================
+    // UTILITY FUNCTIONS & RESET
+    // ==========================================================================
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorBox.classList.remove('hidden');
+    }
+
+    function hideError() {
+      errorBox.classList.add('hidden');
+    }
+
+    function resetAnalysis() {
+      resultsContainer.classList.add('hidden');
+      resetFileSelection();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function formatTimestamp(sec) {
+      const m = Math.floor(sec / 60);
+      const s = (sec % 60).toFixed(2);
+      const mStr = String(m).padStart(2, '0');
+      const sStr = String(s).padStart(5, '0');
+      return `${mStr}:${sStr}`;
+    }
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+  </script>
+</body>
+</html>

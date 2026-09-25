@@ -1,0 +1,25 @@
+# ============================================================
+# Phantom Vox - SIH 2026
+# Voice Cloning Detection & Prevention System
+# Runtime Dependencies
+# ============================================================
+
+# Deep learning
+torch
+torchaudio
+
+# Numerical & audio processing
+numpy
+soundfile
+
+# FastAPI backend
+fastapi
+uvicorn
+python-multipart
+pydantic
+
+# Live system-audio / WASAPI loopback recording
+PyAudioWPatch
+
+# HTTP communication
+requests
