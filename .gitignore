@@ -1,0 +1,10 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Recorded audio / runtime files
+captured_chunks/
+*.wav
+
+# Runtime logs
+detection_log.jsonl
